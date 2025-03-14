@@ -1,0 +1,8 @@
+# Ignore large dataset files and temporary outputs
+
+data/raw/
+data/processed/
+models/
+__pycache__/
+*.pkl
+*.log
