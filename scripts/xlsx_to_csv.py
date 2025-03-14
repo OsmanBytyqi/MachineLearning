@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 
+# just used this script to convert to csv, and it did not work because of the "," not handling as we should
+
 def convert_xlsx_to_csv(input_file, output_file=None):
     """
     Converts an Excel (.xlsx) file to CSV (.csv).
