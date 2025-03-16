@@ -1,4 +1,3 @@
-
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
@@ -45,6 +44,42 @@ class DataPreprocessing:
 
         return self.df
 
+    def check_and_drop_years(self):
+        """Checks if all years are between 2019 and 2024 and drops rows with invalid years."""
+        # Ensure that 'Viti' is treated as a string and clean non-numeric characters
+        print("Checking data type of 'Viti' column:")
+        print(self.df['Viti'].dtype)  # Print the overall type of the 'Viti' column
+
+        # Clean non-numeric characters and whitespaces, if any, from 'Viti'
+        self.df['Viti'] = self.df['Viti'].astype(str).str.replace(r'[^0-9]', '', regex=True)
+
+        # Convert to numeric, invalid entries will become NaN
+        self.df['Viti'] = pd.to_numeric(self.df['Viti'], errors='coerce')
+
+        # Drop rows with invalid 'Viti' values (NaN)
+        initial_count = len(self.df)
+        self.df = self.df[self.df['Viti'].between(2019, 2024, inclusive='both')]  # Use 'both' for including both boundaries
+        final_count = len(self.df)
+        print(f"Dropped {initial_count - final_count} rows with invalid years outside 2019-2024.")
+
+    def check_and_drop_months(self):
+        """Checks if all months are between 1 and 12 and drops rows with invalid months."""
+        # Ensure that 'Muaji' is treated as a string and clean non-numeric characters
+        print("Checking data type of 'Muaji' column:")
+        print(self.df['Muaji'].dtype)  # Print the overall type of the 'Muaji' column
+
+        # Clean non-numeric characters and whitespaces, if any, from 'Muaji'
+        self.df['Muaji'] = self.df['Muaji'].astype(str).str.replace(r'[^0-9]', '', regex=True)
+
+        # Convert to numeric, invalid entries will become NaN
+        self.df['Muaji'] = pd.to_numeric(self.df['Muaji'], errors='coerce')
+
+        # Drop rows with invalid 'Muaji' values (NaN) or values outside the 1-12 range
+        initial_count = len(self.df)
+        self.df = self.df[self.df['Muaji'].between(1, 12, inclusive='both')]  # Use 'both' for including both boundaries
+        final_count = len(self.df)
+        print(f"Dropped {initial_count - final_count} rows with invalid months outside 1-12.")
+
     def save_to_csv(self, filename):
         """Saves the cleaned DataFrame to a CSV file."""
         self.df.to_csv(filename, index=False)
@@ -76,6 +111,12 @@ if __name__ == "__main__":
     # Drop missing values and duplicates
     processor.drop_missing_values()
     processor.drop_duplicates()
+
+    # Check and drop rows with invalid years
+    processor.check_and_drop_years()
+
+    # Check and drop rows with invalid months
+    processor.check_and_drop_months()
 
     # Encode categorical columns
     processor.encode_categorical(required_columns, encoding_type="label")
