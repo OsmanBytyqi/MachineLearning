@@ -23,7 +23,7 @@ Për të përgatitur të dhënat për modelin, kemi ndjekur hapat e mëposhtëm:
 - **Trajtimi i outliers:** Identifikuam dhe menaxhuam vlerat ekstreme që mund të ndikojnë në performancën e modelit.
 - **Kodimi i të dhënave kategorike:**  
   - Pasi shumica e kolonave ishin të natyrës kategorike (`Përshkrimi i Sektorit`, `Komuna`, `Statusi i Regjistrimit`, `Përshkrimi i Gjobave në bazë të Ligjit`), i kemi shndërruar në vlera numerike.  
-  - Kolonat `Viti` dhe `Muaji` i kemi bashkuar ne nje kolonë të vetme dhe e kemi shndërruar në vlerë numerike sikur kolonat tjera e kategorizuara.
+  - Kolonat `Viti` dhe `Muaji` i kemi bashkuar ne nje kolonë të vetme dhe e kemi shndërruar në vlerë numerike sikur kolonat tjera të kategorizuara.
 - **Normalizimi dhe shkallëzimi:** Për të siguruar që algoritmat të trajnohen në mënyrë optimale, kemi normalizuar të dhënat numerike.
 
 ## Zgjedhja e Algoritmit
