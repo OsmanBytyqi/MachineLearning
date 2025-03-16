@@ -14,7 +14,31 @@
 
 # Projekti i Mësimit të Makinerisë
 
-Ky projekt është i strukturuar për të zhvilluar, trajnuar dhe vlerësuar modele të mësimit të makinerisë duke përdorur datasetet e dhëna.
+Për studim në lëndën Machine Learning, kemi zgjedhur temën e trajtimeve të gjobave nga raportimet përgjatë viteve 2019-2024. Qëllimi i këtij projekti është ndërtimi i një modeli të mësimit makinerik për të parashikuar vlerën e gjobave të lëshuara, duke u bazuar në faktorë të ndryshëm si sektori, komuna, statusi i regjistrimit dhe përshkrimi i gjobave sipas ligjit.
+
+## Përpunimi i të Dhënave
+Për të përgatitur të dhënat për modelin, kemi ndjekur hapat e mëposhtëm:
+
+- **Pastrimi i të dhënave:** Kontrolluam dhe trajtuam të dhënat e munguara ose të pasakta.
+- **Trajtimi i outliers:** Identifikuam dhe menaxhuam vlerat ekstreme që mund të ndikojnë në performancën e modelit.
+- **Kodimi i të dhënave kategorike:**  
+  - Pasi shumica e kolonave ishin të natyrës kategorike (`Përshkrimi i Sektorit`, `Komuna`, `Statusi i Regjistrimit`, `Përshkrimi i Gjobave në bazë të Ligjit`), i kemi shndërruar në vlera numerike.  
+  - Kolonat `Viti` dhe `Muaji` i kemi bashkuar ne nje kolonë të vetme dhe e kemi shndërruar në vlerë numerike sikur kolonat tjera e kategorizuara.
+- **Normalizimi dhe shkallëzimi:** Për të siguruar që algoritmat të trajnohen në mënyrë optimale, kemi normalizuar të dhënat numerike.
+
+## Zgjedhja e Algoritmit
+Duke pasur parasysh natyrën e problemit si një **detyrë të regresionit** si dhe numrin total te rreshtave që është ndërmjet 1000 dhe 100000, kemi zgjedhur algoritmet e mëposhtme për të ndërtuar modelin:
+
+- **`Regresioni Linear`** – Si model bazë për të kuptuar lidhjen midis variablave.
+- **`Random Forest Regressor`** – Për të kapur më mirë ndërveprimet jo-lineare midis variablave të pavarura dhe vlerës së gjobave.
+- **`XGBoost`** – Një metodë më e avancuar që përdor boosting për të përmirësuar saktësinë dhe performancën e modelit.
+
+## Vlerësimi i Modelit
+Pasi modeli të trajnohet, do të përdorim metrikat e mëposhtme për të vlerësuar performancën e tij:
+
+- **Mean Squared Error (MSE):** Për të matur saktësinë e parashikimeve.
+- **R² Score:** Për të vlerësuar se sa mirë modeli shpjegon variacionin e të dhënave.
+- **Mean Absolute Error (MAE):** Për të kuptuar devijimin mesatar të parashikimeve.
 
 ## Struktura e Projektit
 
