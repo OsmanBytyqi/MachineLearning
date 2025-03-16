@@ -6,7 +6,7 @@
       <p>Fakulteti i Inxhinierise Elektrike dhe Kompjuterike</p>
       <p>Programi Master</p>
       <p>Profesori: Prof. Dr. Lule Ahmeti </p>
-      <p>Mentori: Mentor: Dr. Sc. Mërgim H. HOTI</p>
+      <p>Mentori: Dr. Sc. Mërgim H. HOTI</p>
       <p>Lenda: Machine Learning</p>
     </td>
  </tr>
