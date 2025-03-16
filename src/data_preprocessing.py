@@ -80,6 +80,13 @@ class DataPreprocessing:
         final_count = len(self.df)
         print(f"Dropped {initial_count - final_count} rows with invalid months outside 1-12.")
 
+    def create_muaji_column(self):
+        """Creates a new 'muaji' column based on 'Viti' (year) and 'Muaji' (month)."""
+        # Calculate the months from "2019 Muaji 1" and create the 'muaji' column
+        self.df['muaji'] = (self.df['Viti'] - 2019) * 12 + (self.df['Muaji'] - 1)
+
+        self.df = self.df.drop(columns=['Viti', 'Muaji'])
+
     def save_to_csv(self, filename):
         """Saves the cleaned DataFrame to a CSV file."""
         self.df.to_csv(filename, index=False)
@@ -117,6 +124,9 @@ if __name__ == "__main__":
 
     # Check and drop rows with invalid months
     processor.check_and_drop_months()
+
+    # Create the 'muaji' column based on 'Viti' and 'Muaji'
+    processor.create_muaji_column()
 
     # Encode categorical columns
     processor.encode_categorical(required_columns, encoding_type="label")
