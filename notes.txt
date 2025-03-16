@@ -1,2 +1,3 @@
 to convert xlsx to csv use this command in the main dir:
 -- python3 scripts/xlsx_to_csv.py data/raw/sample.xlsx -o data/processed/output.csv
+ 
