@@ -16,6 +16,35 @@
 
 Për studim në lëndën Machine Learning, kemi zgjedhur temën e trajtimeve të gjobave nga raportimet përgjatë viteve 2019-2024. Qëllimi i këtij projekti është ndërtimi i një modeli të mësimit makinerik për të parashikuar vlerën e gjobave të lëshuara, duke u bazuar në faktorë të ndryshëm si sektori, komuna, statusi i regjistrimit dhe përshkrimi i gjobave sipas ligjit.
 
+
+---
+## Te dhenat e DataSetit 
+
+| **Column Name**          | **Description**                                          | **Data Type**             |
+|---------------------------|----------------------------------------------------------|----------------------------|
+| **Year**                  | The year when the fine was issued.                      | Categorical                |
+| **Month**                 | The month when the fine was issued (1-12).              | Categorical                |
+| **Sector**                | Economic sector/industry of the taxpayer.              | Categorical                |
+| **Municipality**          | Geographic municipality of registration.               | Categorical                |
+| **Registration_Status**   | Legal entity type (LLC, Individual, etc.).             | Categorical                |
+| **Legal_Description**     | Legal basis citation for the fine.                     | Text                       |
+| **Taxpayers_Count**       | Number of registered taxpayers in category.            | Numerical (Discrete)       |
+| **Fines_Issued**          | Total number of fines issued.                          | Numerical (Discrete)       |
+| **Fine_Amount**           | Monetary value of fines in euros (€).                  | Numerical (Continuous)     |
+| **Days_in_month**         | Number of days in the reported month.                  | Numerical (Discrete)       |
+| **Quarter**               | Calendar quarter (1-4).                                 | Categorical                |
+| **Month_sin**             | Sine-transformed month for cyclical encoding.          | Numerical (Continuous)     |
+| **Month_cos**             | Cosine-transformed month for cyclical encoding.        | Numerical (Continuous)     |
+| **Quarter_sin**           | Sine-transformed quarter for cyclical encoding.        | Numerical (Continuous)     |
+| **Quarter_cos**           | Cosine-transformed quarter for cyclical encoding.      | Numerical (Continuous)     |
+| **Law_Article**           | Extracted law/article identifier combination.          | Categorical                |
+| **Law_Article_Freq**      | Frequency-encoded law/article occurrence.              | Numerical (Continuous)     |
+---
+
+
+
+
+
 ## Përpunimi i të Dhënave
 Për të përgatitur të dhënat për modelin, kemi ndjekur hapat e mëposhtëm:
 
