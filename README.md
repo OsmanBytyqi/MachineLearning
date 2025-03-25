@@ -42,6 +42,16 @@ Për studim në lëndën Machine Learning, kemi zgjedhur temën e trajtimeve të
 ---
 
 
+## Shembuj te dhenave
+
+| **Viti** | **Muaji** | **Përshkrimi i Sektorit** | **Komuna** | **Statusi i Regjistrimit** | **Përshkrimi i Gjobave në bazë të Ligjit**       | **Numri i Tatimpaguesve** | **Numri i Gjobave të Lëshuara** | **Vlera e Gjobave të Lëshuara** |
+|----------|-----------|---------------------------|------------|----------------------------|-------------------------------------------------|---------------------------|---------------------------------|---------------------------------|
+| 2019     | 1         | Arsimi                    | PRIZREN    | Individual                 | Nd.Neni.53.6-Law 03/L-222                       | 1                         | 1                               | 250.0                           |
+| 2019     | 1         | Arsimi                    | PRIZREN    | Individual                 | Nd.Neni.53(2.1)-Law 03/L-222                    | 1                         | 1                               | 250.0                           |
+| 2019     | 1         | Arsimi                    | PRISHTINË  | SH.P.K.                    | Nd.Neni.53( 2.3)-Law 03/L-222                   | 1                         | 1                               | 500.0                           |
+
+
+
 
 
 
