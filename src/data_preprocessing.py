@@ -133,3 +133,37 @@ if __name__ == "__main__":
 
     # Save the cleaned data to a CSV file
     processor.save_to_csv("../data/processed/gjobat-all.csv")
+
+class DataFrameWrapper(BaseEstimator, TransformerMixin):
+    def __init__(self, columns):
+        self.columns = columns
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return pd.DataFrame(X, columns=self.columns)
+
+class LegalComponentExtractor(BaseEstimator, TransformerMixin):
+    def __init__(self, unknown_threshold=0.3):
+        self.unknown_threshold = unknown_threshold
+        self.pattern = r"""
+            (?xi)
+            (?:Nd\.?\s*Neni\.?\s*|Neni\s+)
+            (?:\(\s*)? 
+            (?P<Article>
+                (?:[a-z]+\s+)?
+                [\d\s\.\/()%-]+  # Added % to match entries like 15.3%
+                (?:-[a-z]+)?
+                (?:\)?\s*[a-z]*)?
+                (?:\s+(?:dhe|and)\s+[\d\s\.\/()%-]+)*
+            )
+            (?:\)\s*)?[-–]\s*  # Handle different hyphen types
+            (?:Ligji\s*(?:nr\.?)?\s*|Law\s*(?:No\.?)?\s*)?  # More flexible prefix handling
+            (?P<Law>
+                (?:\d+/)?
+                (?:L-?)? 
+                \d+[\d\/L-]*  # Better handle complex codes like 03/L-222
+                (?:/\w+)?
+            )
+        """
