@@ -167,3 +167,16 @@ class LegalComponentExtractor(BaseEstimator, TransformerMixin):
                 (?:/\w+)?
             )
         """
+class FrequencyEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self, min_freq=3, smoothing_factor=0.5, handle_unknown='smooth'):
+        self.min_freq = min_freq
+        self.smoothing_factor = smoothing_factor
+        self.handle_unknown = handle_unknown
+        self.freq_map_ = None
+        self.total_count_ = None
+        self.feature_names_ = None  # Track feature names
+
+class DataPreprocessor:
+    def __init__(self, dataframe):
+        self.df = dataframe.copy()
+        self._create_column_map()
