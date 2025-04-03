@@ -1,29 +1,44 @@
-# train.py
-# This script trains a machine learning model.
-
+import os
+import sys
+import warnings
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 import joblib
+import numpy as np
 
-def train_model():
-    """
-    Loads data, trains a machine learning model, and saves it.
-    """
-    # Load and preprocess data
-    df = pd.read_csv("../data/processed/dataset.csv")  # Example file
-    X = df.drop(columns=['target'])
-    y = df['target']
 
-    # Split dataset
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+class ModelTrainer:
+    def __init__(self, data_path='data/raw/gjobat-all.csv', model_dir='models'):
+        self.data_path = data_path
+        self.model_dir = model_dir
+        self.model = None
+        self.pipeline = None
+        self.X_train = self.X_test = self.y_train = self.y_test = None
+        self.evaluation_results = []  # Stores metrics until final print
 
-    # Train model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
+        self._load_and_prepare_data()
+        # self._time_based_split()
 
-    # Save the trained model
-    joblib.dump(model, "../models/model.pkl")
-
-if __name__ == "__main__":
-    train_model()
+    def _load_and_prepare_data(self):
+        print("📥 Loading data...")
+        data = pd.read_csv(self.data_path)
+        
+        self.preprocessor = DataPreprocessor(data)
+        self.preprocessor.print_column_explanations()
+        profile = self.preprocessor.generate_data_profile()
+        print("\nNumerical Statistics:")
+        print(profile['num_stats'])
+        self.preprocessor.generate_data_quality_report()
+        self.preprocessor.temporal_analysis_report()
+        self.preprocessor.correlation_report(threshold=0.6)
+        self.preprocessor.distribution_metrics_report()
+        self.preprocessor.legal_component_summary()
+        self.preprocessor.dataset_version_info()
+        # Generate skewness visualization
+        self.preprocessor.plot_skewness(save_path='images/skewness.png')
+        self.preprocessor.plot_time_series(save_path='images/time_series.png')
+        self.preprocessor.plot_distributions(save_path='images/distributions.png')
+        self.preprocessor.plot_categorical_counts(top_n=5, save_path='images/categorical_counts.png')
+        self.preprocessor.plot_correlations(figsize=(10, 8), save_path='images/correlation_matrix.png')
+        df_processed = self.preprocessor.preprocess()
+        self.df_clean = df_processed.sort_values('Year')
+        print("✅ Data loaded and preprocessed.")
