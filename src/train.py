@@ -42,3 +42,33 @@ class ModelTrainer:
         df_processed = self.preprocessor.preprocess()
         self.df_clean = df_processed.sort_values('Year')
         print("✅ Data loaded and preprocessed.")
+      def _time_based_split(self):
+        print("⏳ Creating time-based split...")
+        split_year = 2023
+        train_mask = self.df_clean['Year'] < split_year
+        
+        self.X_train = self.df_clean[train_mask].drop('Fine_Amount', axis=1)
+        self.y_train = self.df_clean[train_mask]['Fine_Amount']
+        self.X_test = self.df_clean[~train_mask].drop('Fine_Amount', axis=1)
+        self.y_test = self.df_clean[~train_mask]['Fine_Amount']
+        print(f"✅ Split complete - Train: {len(self.X_train)}, Test: {len(self.X_test)}")
+
+    def _evaluate_model(self, model):
+        """Calculate metrics and return formatted results"""
+        try:
+            check_is_fitted(model)
+        except Exception as e:
+            return [f"⚠️ Model evaluation failed: {e}"]
+        
+        metrics = []
+        sets = [('Train', self.X_train, self.y_train), ('Test', self.X_test, self.y_test)]
+        
+        for set_name, X, y in sets:
+            y_pred = model.predict(X)
+            metrics.append(
+                f"{set_name} Performance:\n"
+                f"R²: {r2_score(y, y_pred):.3f}, "
+                f"RMSE: {np.sqrt(mean_squared_error(y, y_pred)):.2f}, "
+                f"MAE: {mean_absolute_error(y, y_pred):.2f}"
+            )
+        return metrics
