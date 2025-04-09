@@ -72,3 +72,66 @@ class ModelTrainer:
                 f"MAE: {mean_absolute_error(y, y_pred):.2f}"
             )
         return metrics
+    
+    def train_model(self, model_type='random_forest'):
+        """Train model and queue metrics for later display"""
+        preprocessing_pipeline = self.preprocessor.build_preprocessing_pipeline()
+        
+        models = {
+            'random_forest': {
+                'model': RandomForestRegressor(random_state=42),
+                'params': {
+                    'model__n_estimators': [200, 300],
+                    'model__max_depth': [None, 10],
+                    'model__min_samples_split': [2, 5]
+                }
+            },
+            'xgboost': {
+                'model': XGBRegressor(random_state=42),
+                'params': {
+                    'model__learning_rate': [0.05, 0.1],
+                    'model__max_depth': [4, 6],
+                    'model__n_estimators': [200, 300]
+                }
+            },
+            'catboost': {
+                'model': CatBoostRegressor(verbose=0, random_state=42),
+                'params': {
+                    'model__iterations': [500, 1000],
+                    'model__depth': [6, 8],
+                    'model__learning_rate': [0.01, 0.05]
+                }
+            }
+        }
+
+        if model_type not in models:
+            raise ValueError(f"Invalid model_type. Choose from {list(models.keys())}")
+
+        print(f"\n🚀 Training {model_type.replace('_', ' ').title()}...")
+        pipeline = Pipeline([
+            ('preprocessing', preprocessing_pipeline),
+            ('model', models[model_type]['model'])
+        ])
+        
+        tscv = TimeSeriesSplit(n_splits=3)
+        grid_search = GridSearchCV(
+            pipeline,
+            param_grid=models[model_type]['params'],
+            cv=tscv,
+            scoring='neg_root_mean_squared_error',
+            n_jobs=-1,
+            verbose=1
+        )
+
+        grid_search.fit(self.X_train, self.y_train)
+        self.model = grid_search.best_estimator_
+        
+        print(f"\n🏆 Best Parameters for {model_type}:")
+        print(grid_search.best_params_)
+        
+        # Store metrics instead of printing immediately
+        self.evaluation_results.extend(
+            [f"\n----- {model_type.replace('_', ' ').title()} Metrics -----"] 
+            + self._evaluate_model(self.model)
+        )
+        self._save_model(f'{model_type}_model.pkl')
