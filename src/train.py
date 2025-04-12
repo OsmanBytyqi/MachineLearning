@@ -4,7 +4,18 @@ import warnings
 import pandas as pd
 import joblib
 import numpy as np
+from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
+from sklearn.pipeline import Pipeline
+from data_preprocess import DataPreprocessor
+from sklearn.utils.validation import check_is_fitted
 
+# Targeted warning suppression for pipeline fitting messages
+warnings.filterwarnings("ignore", category=FutureWarning,
+                        message=".*Pipeline instance is not fitted yet.*")
 
 class ModelTrainer:
     def __init__(self, data_path='data/raw/gjobat-all.csv', model_dir='models'):
@@ -42,7 +53,8 @@ class ModelTrainer:
         df_processed = self.preprocessor.preprocess()
         self.df_clean = df_processed.sort_values('Year')
         print("✅ Data loaded and preprocessed.")
-      def _time_based_split(self):
+
+    def _time_based_split(self):
         print("⏳ Creating time-based split...")
         split_year = 2023
         train_mask = self.df_clean['Year'] < split_year
@@ -72,7 +84,7 @@ class ModelTrainer:
                 f"MAE: {mean_absolute_error(y, y_pred):.2f}"
             )
         return metrics
-    
+
     def train_model(self, model_type='random_forest'):
         """Train model and queue metrics for later display"""
         preprocessing_pipeline = self.preprocessor.build_preprocessing_pipeline()
@@ -135,3 +147,24 @@ class ModelTrainer:
             + self._evaluate_model(self.model)
         )
         self._save_model(f'{model_type}_model.pkl')
+
+    def _save_model(self, filename):
+        os.makedirs(self.model_dir, exist_ok=True)
+        model_path = os.path.join(self.model_dir, filename)
+        joblib.dump(self.model, model_path)
+        print(f"\n💾 Model saved to {model_path}")
+
+    def print_metrics(self):
+        """Print all collected metrics at once"""
+        print("\n📊 FINAL MODEL METRICS:")
+        print("\n".join(self.evaluation_results))
+
+if __name__ == "__main__":
+    trainer = ModelTrainer()
+    
+    # Train models and collect metrics
+    for model_type in ['random_forest', 'xgboost', 'catboost']:
+        trainer.train_model(model_type)
+    
+    # Print all metrics after training completes
+    trainer.print_metrics()
