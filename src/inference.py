@@ -1,5 +1,3 @@
-# inference.py
-# This script loads a trained model and makes predictions on new data.
 
 import joblib
 import pandas as pd
