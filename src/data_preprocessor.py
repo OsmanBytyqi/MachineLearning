@@ -240,7 +240,6 @@ class FrequencyEncoder(BaseEstimator, TransformerMixin):
         self.feature_names_ = X.columns.tolist()
         return X
 
-
 class DataPreprocessor:
     def __init__(self, dataframe):
         self.df = dataframe.copy()
