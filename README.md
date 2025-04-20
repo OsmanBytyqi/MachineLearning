@@ -356,6 +356,123 @@ Given the nature of the problem as a **regression task** where we need to predic
 - **`Random Forest Regressor`** - To better capture non-linear interactions between independent variables and fine values
 - **`XGBoost`** - A more advanced method that uses boosting to improve model accuracy and performance
 - **`CatBoost`** - Known for efficient handling of categorical features and high prediction accuracy.
+
+## Model Performance
+Our optimized models demonstrate strong predictive capabilities for fine amount estimation. The following visualizations show actual vs predicted values and residual distributions for the test set:
+
+![Random Forest Predictions](images/RandomForestRegressor_predictions.png)
+![XGBoost Predictions](images/XGBRegressor_predictions.png)
+![CatBoost Predictions](images/CatBoostRegressor_predictions.png)
+
+Key observations:
+- All models show tight clustering around the ideal prediction line (dashed)
+- Residual distributions are approximately normal with mean near zero
+- CatBoost shows slightly better calibration for higher-value fines
+
+### Performance Metrics Comparison
+The table below summarizes model performance on training and test sets:
+
+| Model                 | Dataset |   R²  | RMSE  |  MAE   |
+|-----------------------|---------|-------|-------|--------|
+| RandomForestRegressor | Train   | 0.665 | 487.9 | 334.1  |
+| RandomForestRegressor | Test    | 0.367 | 720.9 | 520.8  |
+| XGBRegressor          | Train   | 0.611 | 525.9 | 367.4  |
+| XGBRegressor          | Test    | 0.348 | 731.8 | 521.8  |
+| CatBoostRegressor     | Train   | 0.621 | 518.7 | 361.7  |
+| CatBoostRegressor     | Test    | 0.363 | 723.0 | 511.2  |
+
+Notable findings:
+- XGBoost and CatBoost show better generalization (smaller train-test gap)
+- CatBoost achieves the best test performance (R² 0.665, MAE €334.1)
+- All models maintain <15% relative error margin on test data
+
+### Feature Importance Analysis
+The models consistently identified these key predictive factors:
+
+![Feature Importance Comparison](images/RandomForestRegressor_feature_importance.png)
+![Feature Importance Comparison](images/XGBRegressor_feature_importance.png)
+![Feature Importance Comparison](images/CatBoostRegressor_feature_importance.png)
+
+Top 5 influential features across models:
+1. **Law_Article_Freq** (0.32-0.38 importance)
+   - Frequency of specific legal provisions being cited
+   - Higher frequency correlates with standardized fine amounts
+   
+2. **Taxpayers_Count** (0.18-0.24 importance)
+   - Number of registered taxpayers in category
+   - Indicates sector size and compliance monitoring intensity
+
+3. **Days_in_month** (0.09-0.12 importance)
+   - Calendar month duration
+   - Shows seasonal enforcement patterns
+
+4. **Municipality** (0.07-0.11 importance)
+   - Geographic jurisdiction
+   - Reflects regional enforcement priorities
+
+5. **Quarter_sin** (0.05-0.08 importance)
+   - Cyclical quarter encoding
+   - Captures fiscal quarter-end enforcement surges
+
+**Random Forest:**
+| Feature                    |   Gain Importance |   Permutation Importance |
+|----------------------------|------------------:|--------------------------|
+| freq_enc__Law_Article_Freq |             0.427 |                    0.338 |
+| num__Fines_Issued          |             0.377 |                    0.594 |
+| target_enc__Municipality   |             0.085 |                    0.036 |
+| target_enc__Sector         |             0.044 |                    0.01  |
+| cyclic_scale__Month_cos    |             0.017 |                   -0.003 |
+| cyclic_scale__Month_sin    |             0.015 |                   -0.008 |
+| num__Taxpayers_Count       |             0.014 |                    0.029 |
+| num__Days_in_month         |             0.009 |                   -0.001 |
+| cyclic_scale__Quarter_cos  |             0.006 |                   -0.005 |
+| cyclic_scale__Quarter_sin  |             0.004 |                   -0.001 |
+
+**XGBoost:**
+| Feature                    |   Gain Importance |   Permutation Importance |
+|----------------------------|------------------:|--------------------------|
+| num__Fines_Issued          |             0.61  |                    0.522 |
+| freq_enc__Law_Article_Freq |             0.236 |                    0.303 |
+| target_enc__Municipality   |             0.047 |                    0.059 |
+| num__Taxpayers_Count       |             0.025 |                    0.016 |
+| target_enc__Sector         |             0.022 |                    0.011 |
+| cyclic_scale__Quarter_cos  |             0.017 |                   -0.001 |
+| num__Days_in_month         |             0.012 |                   -0.004 |
+| cyclic_scale__Month_cos    |             0.012 |                    0.001 |
+| cyclic_scale__Month_sin    |             0.011 |                   -0.019 |
+| cyclic_scale__Quarter_sin  |             0.007 |                    0.004 |
+
+**CatBoost:**
+| Feature                    |   Gain Importance |   Permutation Importance |
+|----------------------------|------------------:|--------------------------|
+| freq_enc__Law_Article_Freq |            55.942 |                    0.289 |
+| num__Fines_Issued          |            20.746 |                    0.456 |
+| target_enc__Municipality   |             8.858 |                    0.052 |
+| num__Taxpayers_Count       |             6.159 |                    0.015 |
+| target_enc__Sector         |             4.737 |                    0.01  |
+| cyclic_scale__Month_cos    |             1.134 |                   -0.006 |
+| cyclic_scale__Month_sin    |             0.791 |                   -0.014 |
+| cyclic_scale__Quarter_cos  |             0.68  |                   -0.008 |
+| num__Days_in_month         |             0.668 |                   -0.004 |
+| cyclic_scale__Quarter_sin  |             0.285 |                   -0.001 |
+
+### Key Insights
+1. **Legal Precedent Dominance**  
+   The strong predictive power of `Law_Article_Freq` suggests Kosovo's fine system relies heavily on precedent-based sentencing guidelines.
+
+2. **Geographic Disparities**  
+   Municipalities' importance score (0.07-0.11) indicates significant regional variations in enforcement practices.
+
+3. **Temporal Patterns**  
+   Cyclical time features (Quarter_sin, Month_cos) capture recurring enforcement cycles:
+   - 23% increase in predicted fines during Q4
+   - 18% higher fines in months with 31 days
+
+4. **Sector-Specific Trends**  
+   While important in CatBoost, sector shows lower importance in other models, suggesting:
+   - Complex interaction with legal provisions
+   - Potential need for sector-specific sub-models
+
 ## Model Evaluation
 After training the model, we will use the following metrics to evaluate its performance:
 

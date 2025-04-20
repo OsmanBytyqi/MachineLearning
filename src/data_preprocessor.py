@@ -7,7 +7,7 @@ import pandas as pd
 import re
 import seaborn as sns
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.impute import KNNImputer as DataFrameKNNImputer
+from sklearn.impute import KNNImputer as DataFrameKNNImputer, SimpleImputer
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import RobustScaler as DataFrameRobustScaler, FunctionTransformer
 from sklearn.compose import ColumnTransformer, make_column_transformer
@@ -37,13 +37,16 @@ class DataFrameWrapper(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         return pd.DataFrame(X, columns=self.columns)
+    
+    def get_feature_names_out(self, input_features=None):
+        return np.array(self.columns)
 
 class DateEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, year_col='Year', month_col='Month', cycle_precision=3):
         self.year_col = year_col
         self.month_col = month_col
         self.cycle_precision = cycle_precision
-        self.feature_names_ = None  # Add to track feature names
+        self.feature_names_ = None
 
     def fit(self, X, y=None):
         # Validate input columns
@@ -96,7 +99,9 @@ class DateEncoder(BaseEstimator, TransformerMixin):
         # Preserve feature names
         self.feature_names_ = X.columns.tolist()
         return X
-
+    
+    def get_feature_names_out(self, input_features=None):
+        return np.array(self.feature_names_)
 
 class LegalComponentExtractor(BaseEstimator, TransformerMixin):
     def __init__(self, unknown_threshold=0.3):
@@ -183,9 +188,9 @@ class LegalComponentExtractor(BaseEstimator, TransformerMixin):
             )
             
         return X
-
-
-
+    
+    def get_feature_names_out(self, input_features=None):
+        return np.array(self.feature_names_)
 class FrequencyEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, min_freq=3, smoothing_factor=0.5, handle_unknown='smooth'):
         self.min_freq = min_freq
@@ -239,8 +244,9 @@ class FrequencyEncoder(BaseEstimator, TransformerMixin):
         # Update feature names after transformation
         self.feature_names_ = X.columns.tolist()
         return X
-
-
+    
+    def get_feature_names_out(self, input_features=None):
+        return np.array(self.feature_names_)
 class DataPreprocessor:
     def __init__(self, dataframe):
         self.df = dataframe.copy()
@@ -329,13 +335,17 @@ class DataPreprocessor:
         return df
     
     def _handle_missing(self, df):
-        return df.dropna(subset=['Fine_Amount'])
+        df = df.dropna(subset=['Fine_Amount'])
+        
+        # Impute Fines_Issued before dropping rows
+        df['Fines_Issued'] = df['Fines_Issued'].fillna(0)
+        
+        return df
     
     def _remove_duplicates(self, df):
         return df.drop_duplicates()
     
     def _handle_outliers(self, df):
-        """Clip Fine_Amount using IQR bounds."""
         if 'Fine_Amount' not in df.columns:
             return df
 
@@ -414,17 +424,22 @@ class DataPreprocessor:
             ('drop_columns', drop_transformer)
         ])
 
-        numeric_features = ['Taxpayers_Count', 'Days_in_month']
+        numeric_features = ['Taxpayers_Count', 'Days_in_month', "Fines_Issued"]
         cyclic_features = ['Month_sin', 'Month_cos', 'Quarter_sin', 'Quarter_cos']
         categorical_features = ['Sector', 'Municipality']
 
         # Numeric pipeline with DataFrame output
         numeric_transformer = Pipeline([
-            ('num_impute', DataFrameKNNImputer(n_neighbors=5)),
+            ('num_impute', DataFrameKNNImputer(
+                n_neighbors=5, 
+                weights='distance', 
+                add_indicator=True
+            )),
             ('num_scale', DataFrameRobustScaler())
         ])
         
         categorical_transformer = Pipeline([
+            ('target_enc', TargetEncoder(smoothing=1.0)),
             ('to_df', DataFrameWrapper(columns=categorical_features))
         ])
 
@@ -439,26 +454,23 @@ class DataPreprocessor:
             ('feat_eng', feature_engineering),
             ('target_encoder', TargetEncoder(cols=categorical_features, smoothing=1.0)),
             ('preprocessor', preprocessor),
-            # ('log_transform', log_transformer),
+            ('final_imputer', SimpleImputer(strategy='constant', fill_value=0)),  # New step
             ('feature_selection', SelectKBest(mutual_info_regression, k=10))
         ])
 
         return full_pipeline
 
     def preprocess(self):
-        """Main method to execute full preprocessing pipeline"""
         df = self._base_clean(self.df)
         df = self._enhance_features(df)
         return df
     
     def to_csv(self, output_path, processed=True):
-        """Save the data to a CSV file"""
         data = self.preprocess() if processed else self.df
         data.to_csv(output_path, index=False)
         print(f"Data saved to {output_path}")
         
     def plot_time_series(self, df=None, title='Time Series of Fines', figsize=(12, 6), save_path=None):
-        """Plot monthly total fines over time."""
         if df is None:
             df = self.preprocess()
         
@@ -521,16 +533,13 @@ class DataPreprocessor:
         return report
 
     def _find_near_duplicates(self, df, threshold=0.95):
-        """Identify near-duplicates using hashing"""
         sample_hash = df.head(1000).apply(lambda x: hash(tuple(x)), axis=1)
         return int(sample_hash.nunique() / len(sample_hash) < threshold)
 
     def _find_constant_features(self, df):
-        """Identify features with <2 unique values"""
         return df.columns[df.nunique() == 1].tolist()
 
     def plot_distributions(self, df=None, columns=None, figsize=(15, 5), save_path=None):
-        """Plot distributions of numerical features."""
         if df is None:
             df = self.preprocess()
         columns = columns or ['Fine_Amount', 'Taxpayers_Count', 'Fines_Issued']
@@ -546,7 +555,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
         
     def get_key_statistics(self, df=None):
-        """Generate key numerical/categorical statistics"""
         if df is None:
             df = self.preprocess()
         
@@ -616,7 +624,6 @@ class DataPreprocessor:
         return report
     
     def legal_component_summary(self, df=None):
-        """Analyze extracted legal components"""
         if df is None:
             df = self.preprocess()
         print("\nthis is df: ", df.head())
@@ -641,7 +648,6 @@ class DataPreprocessor:
         return summary
     
     def outlier_analysis_report(self, df=None):
-        """Detailed outlier statistics"""
         if df is None:
             df = self.preprocess()
         
@@ -721,7 +727,6 @@ class DataPreprocessor:
         return info
         
     def distribution_metrics_report(self, df=None):
-        """Show skewness and kurtosis for numerical features"""
         if df is None:
             df = self.preprocess()
         
@@ -738,7 +743,6 @@ class DataPreprocessor:
         return report
 
     def plot_categorical_counts(self, df=None, columns=None, top_n=10, figsize=(15, 5), save_path=None):
-        """Plot top categories for categorical features."""
         if df is None:
             df = self.preprocess()
         columns = columns or ['Sector', 'Municipality', 'Registration_Status']
@@ -755,7 +759,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
 
     def plot_outliers_comparison(self, figsize=(12, 6), save_path=None):
-        """Compare distribution before/after outlier handling."""
         original = self._base_clean(self.df.copy())
         processed = self.preprocess()
         
@@ -770,7 +773,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
 
     def plot_correlations(self, df=None, figsize=(12, 10), save_path=None):
-        """Plot correlation heatmap of numerical features."""
         if df is None:
             df = self.preprocess()
         
@@ -789,7 +791,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
         
     def print_column_explanations(self):
-        """Print formatted table of column metadata"""
         meta_df = pd.DataFrame({
             'Description': self.column_descriptions,
             'Data Type': self.column_types
@@ -798,15 +799,6 @@ class DataPreprocessor:
         print(meta_df.to_string())
         
     def generate_data_profile(self, df=None, display_sample=True):
-        """
-        Generate comprehensive data profile report including:
-        - Data sample
-        - Data types
-        - Missing values
-        - Basic statistics
-        - Outlier analysis
-        - Skewness analysis
-        """
         if df is None:
             df = self.preprocess()
             
@@ -860,7 +852,6 @@ class DataPreprocessor:
         return profile
         
     def _calculate_outliers(self, df, method='iqr'):
-        """Calculate number of outliers using specified method"""
         outliers = []
         
         if method == 'iqr':
@@ -882,7 +873,6 @@ class DataPreprocessor:
         return pd.Series(outliers, index=df.columns)
         
     def plot_skewness(self, df=None, figsize=(10, 6), save_path=None):
-        """Visualize skewness of numerical features"""
         if df is None:
             df = self.preprocess()
             
@@ -898,7 +888,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
 
     def plot_missing_values(self, df=None, figsize=(10, 6), save_path=None):
-        """Visualize missing values in raw data."""
         df = df if df is not None else self.df
         missing = df.isnull().mean().sort_values(ascending=False)
         missing = missing[missing > 0]
@@ -911,7 +900,6 @@ class DataPreprocessor:
         self._handle_plot_output(save_path)
 
     def _handle_plot_output(self, save_path):
-        """Handle plot display/saving."""
         if save_path:
             plt.savefig(save_path, bbox_inches='tight')
             plt.close()
