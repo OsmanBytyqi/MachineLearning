@@ -27,7 +27,7 @@ class ModelTrainer:
         self.evaluation_results = []  # Stores metrics until final print
 
         self._load_and_prepare_data()
-        # self._time_based_split()
+        self._time_based_split()
 
     def _load_and_prepare_data(self):
         print("📥 Loading data...")
