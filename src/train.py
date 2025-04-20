@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
 from sklearn.pipeline import Pipeline
-from data_preprocess import DataPreprocessor
+from data_preprocessor import DataPreprocessor
 from sklearn.utils.validation import check_is_fitted
 
 # Targeted warning suppression for pipeline fitting messages
