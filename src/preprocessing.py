@@ -69,3 +69,28 @@ class DataPreprocessor:
         for col in original_cat_columns:
             freq_map = df_encoded[col].value_counts(normalize=True).to_dict()
             df_encoded[f'{col}_freq'] = df_encoded[col].map(freq_map)
+
+
+
+        label_encoders = {}
+        for column in categorical_columns:
+            label_encoders[column] = LabelEncoder()
+            col_name = f"{column}_label" 
+            df_encoded[col_name] = label_encoders[column].fit_transform(df[column].astype(str))
+
+        if 'Numri i Gjobave të Lëshuara' in df.columns and 'Numri i Tatimpaguesve' in df.columns:
+            df_encoded['gjobat_per_tatimpagues'] = df_encoded['Numri i Gjobave të Lëshuara'] / (df_encoded['Numri i Tatimpaguesve'] + 0.001)
+            df_encoded['tatimpagues_per_gjobe'] = df_encoded['Numri i Tatimpaguesve'] / (df_encoded['Numri i Gjobave të Lëshuara'] + 0.001)
+            df_encoded['gjoba_tatimpagues_ratio_log'] = np.log1p(df_encoded['gjobat_per_tatimpagues'])
+
+
+
+
+        if 'Viti' in df.columns and 'Muaji' in df.columns:
+            df_encoded['date_numeric'] = df_encoded['Viti'] + df_encoded['Muaji']/12
+            df_encoded['season'] = ((df_encoded['Muaji'] % 12) // 3 + 1).astype(int)
+            df_encoded['quarter'] = ((df_encoded['Muaji'] - 1) // 3 + 1).astype(int)
+            df_encoded['is_summer'] = ((df_encoded['Muaji'] >= 6) & (df_encoded['Muaji'] <= 8)).astype(int)
+            df_encoded['is_winter'] = ((df_encoded['Muaji'] == 12) | (df_encoded['Muaji'] <= 2)).astype(int)
+            df_encoded['month_sin'] = np.sin(2 * np.pi * df_encoded['Muaji']/12)
+            df_encoded['month_cos'] = np.cos(2 * np.pi * df_encoded['Muaji']/12)
