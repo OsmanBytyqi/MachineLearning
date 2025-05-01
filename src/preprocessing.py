@@ -94,3 +94,49 @@ class DataPreprocessor:
             df_encoded['is_winter'] = ((df_encoded['Muaji'] == 12) | (df_encoded['Muaji'] <= 2)).astype(int)
             df_encoded['month_sin'] = np.sin(2 * np.pi * df_encoded['Muaji']/12)
             df_encoded['month_cos'] = np.cos(2 * np.pi * df_encoded['Muaji']/12)
+
+
+            
+        if df_encoded.shape[0] > 10:
+            numeric_cols = df_encoded.select_dtypes(include=['number']).columns
+            numeric_cols = [col for col in numeric_cols if col != target_column]
+            if len(numeric_cols) > 1:
+                clustering_data = df_encoded[numeric_cols].copy()
+                scaler = StandardScaler()
+                scaled_data = scaler.fit_transform(clustering_data)
+                for n_clusters in [3, 5, 8]:
+                    try:
+                        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                        cluster_labels = kmeans.fit_predict(scaled_data)
+                        df_encoded[f'cluster_kmeans_{n_clusters}'] = cluster_labels
+                        distances = kmeans.transform(scaled_data)
+                        for i in range(n_clusters):
+                            df_encoded[f'dist_to_cluster_{n_clusters}_{i}'] = distances[:, i]
+                    except Exception as e:
+                        logging.error(f"Error in creating cluster features: {str(e)}")
+
+        if target_column in df_encoded.columns:
+            skewness = df_encoded[target_column].skew()
+            if skewness > 1.0:
+                df_encoded[target_column] = np.log1p(df_encoded[target_column])
+                logging.info(f"Applied log transformation to target column: {target_column}")
+
+        if df_encoded.shape[1] > 5:
+            numeric_cols = df_encoded.select_dtypes(include=['number']).columns
+            numeric_cols = [col for col in numeric_cols if col != target_column]
+            if len(numeric_cols) > 5:
+                pca_data = df_encoded[numeric_cols].copy()
+                scaler = StandardScaler()
+                scaled_data = scaler.fit_transform(pca_data)
+                n_components = min(10, len(numeric_cols) - 1)
+                pca = PCA(n_components=n_components, random_state=42)
+                pca_result = pca.fit_transform(scaled_data)
+                for i in range(pca_result.shape[1]):
+                    df_encoded[f'pca_{i+1}'] = pca_result[:, i]
+
+        df_encoded.drop(columns=original_cat_columns, inplace=True)
+
+        self.df_processed = df_encoded
+        self.label_encoders = label_encoders
+        logging.info(f"Enhanced preprocessing completed successfully. Shape: {self.df_processed.shape}")
+        return self.df_processed, self.label_encoders
