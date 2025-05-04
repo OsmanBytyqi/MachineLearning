@@ -49,3 +49,73 @@ class ModelEvaluator:
         else:
             best_model_name = min(results.keys(), key=lambda k: results[k].get(metric, float('inf')))
         return best_model_name, results[best_model_name]
+
+    def calculate_feature_importance(self, model: Any, X_test: pd.DataFrame, y_test: pd.Series, n_repeats: int = 5) -> pd.DataFrame:
+        feature_names = X_test.columns.tolist()
+        perm_importance = permutation_importance(
+            model, X_test, y_test, 
+            n_repeats=n_repeats, 
+            random_state=42, 
+            n_jobs=-1
+        )
+        importance_df = pd.DataFrame({
+            'Feature': feature_names,
+            'Importance': perm_importance.importances_mean,
+            'Std': perm_importance.importances_std
+        }).sort_values('Importance', ascending=False)
+        return importance_df
+
+    def model_error_analysis(self, model: Any, X_test: pd.DataFrame, y_test: pd.Series) -> pd.DataFrame:
+        y_pred = model.predict(X_test)
+        error_df = pd.DataFrame({
+            'Actual': y_test,
+            'Predicted': y_pred,
+            'Error': y_test - y_pred,
+            'AbsError': np.abs(y_test - y_pred),
+            'PercentError': 100 * np.abs((y_test - y_pred) / (y_test + 1e-10))
+        })
+        return error_df
+
+    def save_results(self, results: Dict[str, Dict[str, float]]) -> None:
+        with open(self.metrics_file, 'w') as f:
+            f.write("# MODEL PERFORMANCE SUMMARY\n\n")
+            for model_name, metrics in results.items():
+                f.write(f"\n{model_name.upper()} Results:\n")
+                for metric_name, value in metrics.items():
+                    if metric_name != 'predictions':
+                        f.write(f"{metric_name.upper()}: {value:.4f}\n")
+                f.write("-" * 80 + "\n")
+            
+            best_model_name, best_metrics = self.get_best_model(results)
+            f.write(f"\n\nBEST MODEL PERFORMANCE: {best_model_name.upper()} with R2: {best_metrics.get('r2', 0):.4f}\n")
+            
+            best_r2 = best_metrics.get('r2', 0)
+            if best_r2 >= 0.9:
+                f.write("\nTARGET ACHIEVED: R² score of 90% or better has been reached!\n")
+            else:
+                f.write(f"\nTARGET NOT YET ACHIEVED: R² score is {best_r2:.4f}, " 
+                        f"which is {(0.9 - best_r2) * 100:.2f}% away from the 90% target.\n")
+        
+        self.logger.info(f"Results saved to {self.metrics_file}")
+
+    def load_results(self) -> Dict[str, Dict[str, float]]:
+        results = {}
+        if not os.path.exists(self.metrics_file):
+            self.logger.warning(f"Results file not found: {self.metrics_file}")
+            return results
+        
+        current_model = None
+        with open(self.metrics_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.endswith("Results:"):
+                    current_model = line.split()[0].lower()
+                    results[current_model] = {}
+                    continue
+                if current_model and any(m in line for m in ["MAE:", "RMSE:", "R2:"]):
+                    parts = line.split(":")
+                    if len(parts) == 2:
+                        metric_name = parts[0].strip().lower()
+                        metric_value = float(parts[1].strip())
+                        results[current_model][metric_name] = metric_value
+        return results
