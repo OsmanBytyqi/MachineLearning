@@ -518,10 +518,6 @@ This will automatically:
 Project developed for academic and practical purposes by Urim Hoxha and Osman Bytyqi as part of the Machine Learning course at the University of Prishtina.
 
 ## Conclusion
-Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. The implemented machine learning models demonstrated strong predictive capabilities for fine amounts, with key findings including:
-- 28% increase in enforcement intensity over the study period
-- Seasonal patterns with peaks in March/August
-- High standardization in legal framework application
-- Effective feature engineering improving model performance
+Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. Through extensive model optimization and hyperparameter tuning, we achieved exceptional predictive performance, with our Random Forest model reaching an R² score of 0.9994, effectively explaining 99.94% of the variance in fine amounts.
 
 The project provides valuable insights for policy makers while demonstrating practical applications of machine learning in administrative oversight.
