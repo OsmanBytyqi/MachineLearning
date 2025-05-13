@@ -520,4 +520,11 @@ Project developed for academic and practical purposes by Urim Hoxha and Osman By
 ## Conclusion
 Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. Through extensive model optimization and hyperparameter tuning, we achieved exceptional predictive performance, with our Random Forest model reaching an R² score of 0.9994, effectively explaining 99.94% of the variance in fine amounts.
 
-The project provides valuable insights for policy makers while demonstrating practical applications of machine learning in administrative oversight.
+Key achievements and findings include:
+
+Exceptional model performance: Our optimization strategies, particularly the Bayesian search with N_ITER=20 for Random Forest, yielded near-perfect prediction accuracy with MAE as low as 0.0067
+Effective ensemble techniques: Combining Random Forest with Extra Trees Regressor further enhanced model robustness
+Comprehensive parameter exploration: Strategic hyperparameter tuning across all three model types (Random Forest, XGBoost, CatBoost) significantly improved performance
+Temporal insights: 28% increase in enforcement intensity over the study period, with seasonal patterns peaking in March/August
+Legal framework patterns: High standardization in legal provision application, with top 10 provisions covering 90% of cases
+Advanced feature engineering: Cyclical encoding of temporal features and frequency-based encoding of categorical variables substantially improved predictive power
