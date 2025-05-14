@@ -474,11 +474,144 @@ Top 5 influential features across models:
    - Potential need for sector-specific sub-models
 
 ## Model Evaluation
-After training the model, we will use the following metrics to evaluate its performance:
 
-- **Mean Squared Error (MSE):** To measure prediction accuracy.
-- **R² Score:** To assess how well the model explains data variation.
-- **Mean Absolute Error (MAE):** To understand the average deviation of predictions.
+We evaluated our regression models using multiple metrics to ensure comprehensive performance assessment. The models were trained on historical fine enforcement data and tested on a hold-out dataset to measure generalization capability.
+
+### Performance Metrics Comparison
+
+The following table summarizes the key performance metrics for each model:
+
+| Model           | MAE     | RMSE    | R²      |
+|-----------------|---------|---------|---------|
+| Random Forest   | 0.0067  | 0.0290  | 0.9994  |
+| XGBoost         | 0.0439  | 0.0719  | 0.9961  |
+| CatBoost        | 0.0239  | 0.0415  | 0.9987  |
+
+**Key findings:**
+- **Random Forest** achieved the best overall performance with an exceptional R² score of 0.9993, indicating it explains 99.93% of the variance in fine amounts
+- **XGBoost** showed strong performance with an R² of 0.9961, though with slightly higher error metrics
+- **CatBoost** demonstrated excellent performance with an R² of 0.9987, positioning it between the other two models in effectiveness
+
+The target goal of achieving an R² score of 90% or better was significantly exceeded by all models.
+
+### Training Optimization
+
+We implemented several key optimizations in our training pipeline that significantly improved model performance:
+
+#### Hyperparameter Tuning Strategy
+For the Random Forest model, we employed Bayesian optimization (BayesSearchCV) with **N_ITER=20** iterations, which led to substantial improvement in model performance. This optimization strategy efficiently explored the hyperparameter space, including:
+
+```python
+param_space = {
+    'n_estimators': Integer(400, 800),
+    'max_depth': Integer(20, 40),
+    'min_samples_split': Integer(2, 15),
+    'min_samples_leaf': Integer(1, 10),
+    'max_features': Categorical(['sqrt', 'log2', None]),
+    'bootstrap': Categorical([True]),
+    'max_samples': Real(0.7, 0.9),
+    'criterion': Categorical(['squared_error'])
+}
+```
+
+Increasing N_ITER from the default value showed significant improvements in Random Forest performance, with diminishing returns observed beyond 10 iterations. This approach allowed us to find an optimal balance between computational efficiency and model accuracy.
+
+#### Ensemble Approach
+We also implemented a custom ensemble that combines Random Forest with Extra Trees Regressor using a 0.7/0.3 weighting scheme:
+
+```python
+ensemble_y_pred = 0.7 * best_rf.predict(X_test) + 0.3 * et_model.predict(X_test)
+```
+
+This ensemble approach further enhanced predictive accuracy by leveraging the strengths of both algorithms, particularly for difficult-to-predict fine amounts.
+
+#### XGBoost Optimization
+
+For XGBoost, we implemented a grid search approach with multiple parameter combinations, focusing on key hyperparameters that influence model complexity and regularization:
+
+```python
+test_params = [
+    {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 300, 'min_child_weight': 1,
+     'subsample': 0.9, 'colsample_bytree': 0.9, 'gamma': 0.1, 'reg_alpha': 0.1, 'reg_lambda': 1.0},
+    
+    {'max_depth': 6, 'learning_rate': 0.05, 'n_estimators': 200, 'min_child_weight': 5,
+     'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0.5, 'reg_alpha': 1.0, 'reg_lambda': 5.0},
+     
+    {'max_depth': 9, 'learning_rate': 0.01, 'n_estimators': 300, 'min_child_weight': 10,
+     'subsample': 1.0, 'colsample_bytree': 1.0, 'gamma': 1.0, 'reg_alpha': 0.1, 'reg_lambda': 1.0}
+]
+```
+
+We strategically designed these parameter combinations to explore different model complexity levels:
+- Low complexity (shallow trees with higher learning rate)
+- Medium complexity (balanced depth and regularization)
+- High complexity (deeper trees with lower learning rate)
+
+This approach was enhanced with early stopping (50 rounds) to prevent overfitting while allowing the model to converge optimally. The best parameter combination was selected based on validation set performance, then retrained on the full training dataset for final evaluation.
+
+#### CatBoost Optimization
+
+For CatBoost, we used a similar multi-configuration approach with parameter combinations specifically tuned for gradient-boosted decision trees:
+
+```python
+test_params = [
+    {'iterations': 500, 'learning_rate': 0.03, 'depth': 6, 'l2_leaf_reg': 3,
+     'bagging_temperature': 1, 'random_strength': 1},
+    
+    {'iterations': 300, 'learning_rate': 0.1, 'depth': 8, 'l2_leaf_reg': 5,
+     'bagging_temperature': 0.5, 'random_strength': 0.5},
+     
+    {'iterations': 1000, 'learning_rate': 0.01, 'depth': 10, 'l2_leaf_reg': 1,
+     'bagging_temperature': 0.7, 'random_strength': 0.8}
+]
+```
+
+Our CatBoost optimization focused on:
+- Balancing iteration count with learning rate to achieve optimal convergence
+- Varying tree depth to control model complexity
+- Testing different regularization parameters (l2_leaf_reg)
+- Adjusting randomness parameters (bagging_temperature, random_strength) to improve robustness
+
+CatBoost's implementation includes built-in support for early stopping, which we leveraged with a 50-round patience parameter. This approach helped achieve the excellent R² score of 0.9987, demonstrating CatBoost's effectiveness for our regression task.
+
+Each model's hyperparameter strategy was tailored to its specific algorithm characteristics, allowing us to extract maximum performance from all three approaches.
+
+### Visual Evaluation
+
+We generated multiple visualization types to assess model performance:
+
+#### Prediction Visualizations
+The scatter plots below show actual vs. predicted fine amounts for each model, demonstrating the tight clustering around the ideal prediction line:
+
+![Random Forest Predictions](results/plots/random_forest_predictions.png)
+![XGBoost Predictions](results/plots/xgboost_predictions.png)
+![CatBoost Predictions](results/plots/catboost_predictions.png)
+
+#### Residual Analysis
+We analyzed prediction errors through residual plots to confirm the absence of systematic bias:
+
+![Random Forest Residuals](results/plots/random_forest_residuals.png)
+![XGBoost Residuals](results/plots/xgboost_residuals.png)
+![CatBoost Residuals](results/plots/catboost_residuals.png)
+
+The residual distribution plots confirm that prediction errors are normally distributed around zero for all models:
+
+![Random Forest Residual Distribution](results/plots/random_forest_residual_dist.png)
+![XGBoost Residual Distribution](results/plots/xgboost_residual_dist.png)
+![CatBoost Residual Distribution](results/plots/catboost_residual_dist.png)
+
+#### Performance Comparison
+We created comparative visualizations to directly assess the relative strengths of each model:
+
+![R² Comparison](results/plots/r2_comparison.png)
+![RMSE Comparison](results/plots/rmse_comparison.png)
+![MAE Comparison](results/plots/mae_comparison.png)
+
+### Conclusion
+
+The Random Forest regressor emerged as the top-performing model, achieving near-perfect prediction accuracy with the lowest error metrics across all evaluation criteria. All models significantly exceeded our performance targets, demonstrating the effectiveness of our preprocessing pipeline and feature engineering approach in capturing the underlying patterns in fine enforcement data.
+
+The exceptional R² scores indicate that our models can reliably predict fine amounts based on the provided features, making them valuable tools for both analysis and practical application in fine estimation scenarios.
 
 ## Project Structure
 
@@ -521,10 +654,11 @@ Project developed for academic and practical purposes by Urim Hoxha and Osman By
 Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. Through extensive model optimization and hyperparameter tuning, we achieved exceptional predictive performance, with our Random Forest model reaching an R² score of 0.9994, effectively explaining 99.94% of the variance in fine amounts.
 
 Key achievements and findings include:
+- **Exceptional model performance**: Our optimization strategies, particularly the Bayesian search with N_ITER=20 for Random Forest, yielded near-perfect prediction accuracy with MAE as low as 0.0067
+- **Effective ensemble techniques**: Combining Random Forest with Extra Trees Regressor further enhanced model robustness
+- **Comprehensive parameter exploration**: Strategic hyperparameter tuning across all three model types (Random Forest, XGBoost, CatBoost) significantly improved performance
+- **Temporal insights**: 28% increase in enforcement intensity over the study period, with seasonal patterns peaking in March/August
+- **Legal framework patterns**: High standardization in legal provision application, with top 10 provisions covering 90% of cases
+- **Advanced feature engineering**: Cyclical encoding of temporal features and frequency-based encoding of categorical variables substantially improved predictive power
 
-Exceptional model performance: Our optimization strategies, particularly the Bayesian search with N_ITER=20 for Random Forest, yielded near-perfect prediction accuracy with MAE as low as 0.0067
-Effective ensemble techniques: Combining Random Forest with Extra Trees Regressor further enhanced model robustness
-Comprehensive parameter exploration: Strategic hyperparameter tuning across all three model types (Random Forest, XGBoost, CatBoost) significantly improved performance
-Temporal insights: 28% increase in enforcement intensity over the study period, with seasonal patterns peaking in March/August
-Legal framework patterns: High standardization in legal provision application, with top 10 provisions covering 90% of cases
-Advanced feature engineering: Cyclical encoding of temporal features and frequency-based encoding of categorical variables substantially improved predictive power
+This project demonstrates that machine learning can achieve remarkable accuracy in predicting administrative fine amounts, providing valuable decision support for policy makers. The methodologies developed here can be extended to other regulatory domains, offering a framework for evidence-based policy formulation and enforcement strategy optimization.
