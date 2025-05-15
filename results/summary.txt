@@ -1,0 +1,25 @@
+# MODEL PERFORMANCE SUMMARY
+
+
+RANDOM_FOREST Results:
+MAE: 0.0067
+RMSE: 0.0290
+R2: 0.9994
+--------------------------------------------------------------------------------
+
+XGBOOST Results:
+MAE: 0.0439
+RMSE: 0.0719
+R2: 0.9961
+--------------------------------------------------------------------------------
+
+CATBOOST Results:
+MAE: 0.0239
+RMSE: 0.0415
+R2: 0.9987
+--------------------------------------------------------------------------------
+
+
+BEST MODEL PERFORMANCE: RANDOM_FOREST with R2: 0.9994
+
+TARGET ACHIEVED: R² score of 90% or better has been reached!
