@@ -19,6 +19,7 @@ from preprocessing import DataPreprocessor
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+N_ITER = 20
 class ModelTrainer:
     """Class for training and evaluating various ML models."""
     
@@ -159,7 +160,7 @@ class ModelTrainer:
         bayes_search = BayesSearchCV(
             estimator=rf,
             search_spaces=param_space,
-            n_iter=1, # change this for better results
+            n_iter=N_ITER, # change this for better results
             cv=cv,
             verbose=1,
             n_jobs=-1,
