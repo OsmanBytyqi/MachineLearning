@@ -1,1 +1,0 @@
-added notes txt file to push processed dir to github
