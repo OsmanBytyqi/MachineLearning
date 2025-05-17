@@ -12,12 +12,6 @@ Data preprocessing
     - Linear Regression for a simple baseline
     - Random Forest Regressor and XGBoost for better accuracy.
 
-------
-totali 28171 
-Pershkrimi i sektorit -> 8 kategori (kate1, kate2, ..., kate8), numri total per cdo kategori. Shumen per cdo kategori
-Komuna (37), numri total krahasohet me 28171
-statusi i regjistrimit (psh 4 kategori), numri total krahasohet me 28171
-pershkrimi i gjobave (kategorizu), numri total krahasohet me 28171
 
 per krahasim te shumes se totalit (bone ni funksion qe e krahason me 28171)
 
