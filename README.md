@@ -483,7 +483,7 @@ The following table summarizes the key performance metrics for each model:
 
 | Model           | MAE     | RMSE    | R²      |
 |-----------------|---------|---------|---------|
-| Random Forest   | 0.0070  | 0.0303  | 0.9993  |
+| Random Forest   | 0.0067  | 0.0290  | 0.9994  |
 | XGBoost         | 0.0439  | 0.0719  | 0.9961  |
 | CatBoost        | 0.0239  | 0.0415  | 0.9987  |
 
@@ -499,7 +499,7 @@ The target goal of achieving an R² score of 90% or better was significantly exc
 We implemented several key optimizations in our training pipeline that significantly improved model performance:
 
 #### Hyperparameter Tuning Strategy
-For the Random Forest model, we employed Bayesian optimization (BayesSearchCV) with **N_ITER=10** iterations, which led to substantial improvement in model performance. This optimization strategy efficiently explored the hyperparameter space, including:
+For the Random Forest model, we employed Bayesian optimization (BayesSearchCV) with **N_ITER=20** iterations, which led to substantial improvement in model performance. This optimization strategy efficiently explored the hyperparameter space, including:
 
 ```python
 param_space = {
@@ -651,10 +651,14 @@ This will automatically:
 Project developed for academic and practical purposes by Urim Hoxha and Osman Bytyqi as part of the Machine Learning course at the University of Prishtina.
 
 ## Conclusion
-Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. The implemented machine learning models demonstrated strong predictive capabilities for fine amounts, with key findings including:
-- 28% increase in enforcement intensity over the study period
-- Seasonal patterns with peaks in March/August
-- High standardization in legal framework application
-- Effective feature engineering improving model performance
+Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. Through extensive model optimization and hyperparameter tuning, we achieved exceptional predictive performance, with our Random Forest model reaching an R² score of 0.9994, effectively explaining 99.94% of the variance in fine amounts.
 
-The project provides valuable insights for policy makers while demonstrating practical applications of machine learning in administrative oversight.
+Key achievements and findings include:
+- **Exceptional model performance**: Our optimization strategies, particularly the Bayesian search with N_ITER=20 for Random Forest, yielded near-perfect prediction accuracy with MAE as low as 0.0067
+- **Effective ensemble techniques**: Combining Random Forest with Extra Trees Regressor further enhanced model robustness
+- **Comprehensive parameter exploration**: Strategic hyperparameter tuning across all three model types (Random Forest, XGBoost, CatBoost) significantly improved performance
+- **Temporal insights**: 28% increase in enforcement intensity over the study period, with seasonal patterns peaking in March/August
+- **Legal framework patterns**: High standardization in legal provision application, with top 10 provisions covering 90% of cases
+- **Advanced feature engineering**: Cyclical encoding of temporal features and frequency-based encoding of categorical variables substantially improved predictive power
+
+This project demonstrates that machine learning can achieve remarkable accuracy in predicting administrative fine amounts, providing valuable decision support for policy makers. The methodologies developed here can be extended to other regulatory domains, offering a framework for evidence-based policy formulation and enforcement strategy optimization.
