@@ -83,94 +83,152 @@ To prepare the data for model training, we followed these comprehensive steps:
 
 Below is the correlation matrix visualization showing relationships between numerical features:
 
-<img src="images/correlation_matrix.png" />
+<img src="results/plots/correlation_matrix.png" />
 
 ### Pipeline Architecture
-```python
-Pipeline(
-   steps=[
-      ('date_features', DateEncoder()),
-      ('legal_extractor', LegalComponentExtractor()),
-      ('frequency_encoder', FrequencyEncoder()),
-      ('column_transformer', ColumnTransformer([
-         ('numeric', Pipeline([
-            ('imputer', DataFrameKNNImputer(n_neighbors=5)),
-            ('scaler', DataFrameRobustScaler())
-         ]), ['Taxpayers_Count', 'Days_in_month']),
-         ('cyclic', DataFrameRobustScaler(), 
-          ['Month_sin', 'Month_cos', 'Quarter_sin', 'Quarter_cos'])
-      ])),
-      ('feature_selector', SelectKBest(mutual_info_regression, k=10))
-   ]
-)
-```
 
+Our machine learning pipeline is designed with modularity and extensibility in mind, implementing a robust architecture for data processing, model training, and evaluation. The pipeline consists of several key components that work together seamlessly to transform raw data into actionable predictions.
+```python
+class DataPreprocessor:
+    def __init__(self):
+        self.df = None
+        self.df_processed = None
+        self.label_encoders = None
+        self.scaler = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        
+    def load_data(self, file_path):
+        """Load the dataset from CSV file."""
+        
+    def preprocess_data(self, target_column='Vlera e Gjobave të Lëshuara'):
+        """Preprocess the dataset with enhanced feature engineering."""
+        
+    def prepare_train_test_data(self, target_column='Vlera e Gjobave të Lëshuara', 
+                               test_size=0.2, random_state=42):
+        """Split data into train and test sets with feature selection."""
+```
 ### Core Components
 
-#### 1. Temporal Feature Engineering
-- Creates cyclical features from temporal data
-- Validates date ranges (2000+)
-- Handles fiscal calendar patterns
+#### 1. Enhanced Feature Engineering
+The preprocessing pipeline now includes extensive feature engineering:
 
-```python
-# Monthly cycle features
-X['Month_sin'] = np.sin(2 * np.pi * (X['Month']-1)/12)
-X['Month_cos'] = np.cos(2 * np.pi * (X['Month']-1)/12)
-```
+- **Target Encoding**: Applied to high-cardinality categorical features
+  ```python
+  target_encoder = ce.TargetEncoder(cols=important_cat_cols)
+  target_encoder.fit(df_encoded[important_cat_cols], df_encoded[target_column])
+  ```
 
-#### 2. Legal Text Processing
-- Regex patterns for Kosovo legal documents
-- Normalization rules:
-  - `53(2.1)` → `53.2.1`
-  - `Ligji 03/L-222` → `L03/L-222`
+- **Frequency Encoding**: Captures prevalence of categorical values
+  ```python
+  freq_map = df_encoded[col].value_counts(normalize=True).to_dict()
+  df_encoded[f'{col}_freq'] = df_encoded[col].map(freq_map)
+  ```
 
-#### 3. Frequency Encoding
-```python
-smoothed_count = (category_count + 0.5) / (total_samples + 0.5 * n_categories)
-min_freq_value = (5 + 0.5) / (total_samples + 0.5 * n_categories)
-```
+- **Temporal Cyclical Features**: Properly encodes cyclical time data
+  ```python
+  df_encoded['month_sin'] = np.sin(2 * np.pi * df_encoded['Muaji']/12)
+  df_encoded['month_cos'] = np.cos(2 * np.pi * df_encoded['Muaji']/12)
+  df_encoded['quarter'] = ((df_encoded['Muaji'] - 1) // 3 + 1).astype(int)
+  ```
+
+- **Group-based Statistics**: Captures within-group distributions
+  ```python
+  df_encoded[f'mean_{num_col}_by_{cat_col}'] = group_aggs.transform('mean')
+  df_encoded[f'dev_from_mean_{num_col}_by_{cat_col}'] = df_encoded[num_col] - df_encoded[f'mean_{num_col}_by_{cat_col}']
+  df_encoded[f'rank_pct_{num_col}_by_{cat_col}'] = group_aggs.transform(lambda x: (x.rank(method='min') / len(x)))
+  ```
+
+#### 2. Advanced Feature Transformations
+
+- **Mathematical Transformations**: Handles skewed distributions
+  ```python
+  df_encoded[f'log_{num_col}'] = np.log1p(df_encoded[num_col])
+  df_encoded[f'sqrt_{num_col}'] = np.sqrt(df_encoded[num_col])
+  ```
+
+- **Polynomial Features**: Captures non-linear relationships
+  ```python
+  df_encoded['gjobat_squared'] = df_encoded['Numri i Gjobave të Lëshuara'] ** 2
+  df_encoded['gjobat_x_tatimpaguesve'] = df_encoded['Numri i Gjobave të Lëshuara'] * df_encoded['Numri i Tatimpaguesve']
+  ```
+
+- **RBF Features**: Projects data into higher dimensions
+  ```python
+  rbf_sampler = RBFSampler(gamma=gamma, n_components=5, random_state=42)
+  rbf_features = rbf_sampler.fit_transform(X_rbf_scaled)
+  ```
+
+#### 3. Unsupervised Learning Features
+
+- **Clustering-based Features**: Captures data structure
+  ```python
+  kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+  cluster_labels = kmeans.fit_predict(scaled_data)
+  df_encoded[f'cluster_kmeans_{n_clusters}'] = cluster_labels
+  ```
+
+- **PCA Features**: Dimensionality reduction for numeric features
+  ```python
+  pca = PCA(n_components=n_components, random_state=42)
+  pca_result = pca.fit_transform(scaled_data)
+  for i in range(pca_result.shape[1]):
+      df_encoded[f'pca_{i+1}'] = pca_result[:, i]
+  ```
 
 ### Validation System
 
-#### Data Integrity Checks
-```python
-assert df['Month'].between(1,12).all()
-assert df['Municipality'].str.contains('[^A-Za-z ]').sum() == 0
-assert X_trans.shape[0] == X.shape[0]
-```
+- **Stratified Sampling**: Ensures representative test sets
+  ```python
+  y_binned = pd.qcut(y, q=5, labels=False, duplicates='drop')
+  X_train, X_test, y_train, y_test = train_test_split(
+      X, y, test_size=test_size, random_state=random_state, stratify=y_binned
+  )
+  ```
 
-#### Feature Selection
-- Uses Mutual Information Criteria
-- Top Features:
-  1. Month_sin (0.87)
-  2. Law_Article_Freq (0.82)
-  3. Municipality_encoded (0.78)
-  4. Days_in_month (0.65)
+- **Feature Selection**: Filters relevant features using mutual information
+  ```python
+  mi_selector = SelectKBest(mutual_info_regression, k=k1)
+  _ = mi_selector.fit_transform(X, y)
+  ```
 
-### Kosovo-Specific Data Handling
+- **Robust Scaling**: Handles outliers during feature normalization
+  ```python
+  self.scaler = RobustScaler()
+  self.X_train = self.scaler.fit_transform(X_train)
+  self.X_test = self.scaler.transform(X_test)
+  ```
 
-#### 1. Municipality Names
-```python
-def normalize_municipality(name):
-   return unicodedata.normalize('NFKD', name).encode('ascii', 'ignore').decode()
-```
+### Data Handling
 
-#### 2. Legal Reference Processing
-```python
-def standardize_legal_refs(text):
-   pattern = r'(Ligji|Law)[\s-]*(\d+/L-?\d+)'
-   return re.sub(pattern, lambda m: f'L{m.group(2)}', text)
-```
+Our preprocessing pipeline incorporates specific handling for Kosovo's administrative data:
 
-#### 3. Fiscal Calendar Support
-```python
-def to_fiscal_year(date):
-   month = date.month
-   year = date.year
-   return year if month <= 3 else year + 1
-```
+- **Municipality-level Aggregations**: Statistical features for each municipality
+  ```python
+  # For Komuna (municipality) categorical feature
+  target_aggs = df_encoded.groupby('Komuna_label')[target_column]
+  df_encoded[f'target_mean_by_Komuna_label'] = target_aggs.transform('mean')
+  df_encoded[f'target_dev_from_mean_by_Komuna_label'] = df_encoded[target_column] - df_encoded[f'target_mean_by_Komuna_label']
+  ```
 
-All transformations maintain audit trails and preserve original values in separate columns. The preprocessed dataset maintains the original information while being optimized for machine learning algorithms.
+- **Legal Reference Processing**: Fine-grained analysis of legal patterns
+  ```python
+  # For legal basis feature
+  df_encoded['Përshkrimi i Gjobave në bazë të Ligjit_freq'] = df_encoded['Përshkrimi i Gjobave në bazë të Ligjit'].map(
+      df_encoded['Përshkrimi i Gjobave në bazë të Ligjit'].value_counts(normalize=True).to_dict()
+  )
+  ```
+
+- **Seasonal Effects**: Captures Kosovo's administrative cycles
+  ```python
+  df_encoded['season'] = ((df_encoded['Muaji'] % 12) // 3 + 1).astype(int)
+  df_encoded['is_summer'] = ((df_encoded['Muaji'] >= 6) & (df_encoded['Muaji'] <= 8)).astype(int)
+  df_encoded['is_winter'] = ((df_encoded['Muaji'] == 12) | (df_encoded['Muaji'] <= 2)).astype(int)
+  ```
+
+All transformations maintain audit trails with comprehensive logging and preserve information through careful feature engineering. The preprocessed dataset contains rich derived features optimized for machine learning algorithms while maintaining the semantic meaning of the original data.
 
 ## Analytics
 ### Data Sample
@@ -383,7 +441,7 @@ The table below summarizes model performance on training and test sets:
 
 Notable findings:
 - XGBoost and CatBoost show better generalization (smaller train-test gap)
-- CatBoost achieves the best test performance (R² 0.665, MAE €334.1)
+- CatBoost achieves the best test performance (R² 0.665, MAE 334.1)
 - All models maintain <15% relative error margin on test data
 
 ### Feature Importance Analysis
@@ -473,7 +531,7 @@ Top 5 influential features across models:
    - Complex interaction with legal provisions
    - Potential need for sector-specific sub-models
 
-## Model Evaluation
+## Model Evaluation And Further Training
 
 We evaluated our regression models using multiple metrics to ensure comprehensive performance assessment. The models were trained on historical fine enforcement data and tested on a hold-out dataset to measure generalization capability.
 
