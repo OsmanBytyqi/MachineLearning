@@ -705,9 +705,6 @@ This will automatically:
 3. Evaluate model performance
 4. Generate evaluation reports
 
-## Authors and Acknowledgments
-Project developed for academic and practical purposes by Urim Hoxha and Osman Bytyqi as part of the Machine Learning course at the University of Prishtina.
-
 ## Conclusion
 Our analysis of fine enforcement patterns from 2019-2024 revealed significant trends in administrative penalties. Through extensive model optimization and hyperparameter tuning, we achieved exceptional predictive performance, with our Random Forest model reaching an R² score of 0.9994, effectively explaining 99.94% of the variance in fine amounts.
 
@@ -720,3 +717,6 @@ Key achievements and findings include:
 - **Advanced feature engineering**: Cyclical encoding of temporal features and frequency-based encoding of categorical variables substantially improved predictive power
 
 This project demonstrates that machine learning can achieve remarkable accuracy in predicting administrative fine amounts, providing valuable decision support for policy makers. The methodologies developed here can be extended to other regulatory domains, offering a framework for evidence-based policy formulation and enforcement strategy optimization.
+
+## Authors and Acknowledgments
+Project developed for academic and practical purposes by Urim Hoxha and Osman Bytyqi as part of the Machine Learning course at the University of Prishtina.
