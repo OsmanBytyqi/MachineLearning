@@ -1,25 +1,43 @@
 # MODEL PERFORMANCE SUMMARY
 
 
-RANDOM_FOREST Results:
+RANDOM_FOREST Results (TEST):
 MAE: 0.0067
 RMSE: 0.0290
 R2: 0.9994
+
+RANDOM_FOREST Results (TRAIN):
+MAE: 0.0031
+RMSE: 0.0185
+R2: 0.9998
+R2_GAP (TRAIN-TEST): 0.0004
 --------------------------------------------------------------------------------
 
-XGBOOST Results:
+XGBOOST Results (TEST):
 MAE: 0.0439
 RMSE: 0.0719
 R2: 0.9961
+
+XGBOOST Results (TRAIN):
+MAE: 0.0425
+RMSE: 0.0686
+R2: 0.9966
+R2_GAP (TRAIN-TEST): 0.0004
 --------------------------------------------------------------------------------
 
-CATBOOST Results:
+CATBOOST Results (TEST):
 MAE: 0.0239
 RMSE: 0.0415
 R2: 0.9987
+
+CATBOOST Results (TRAIN):
+MAE: 0.0210
+RMSE: 0.0337
+R2: 0.9992
+R2_GAP (TRAIN-TEST): 0.0005
 --------------------------------------------------------------------------------
 
 
-BEST MODEL PERFORMANCE: RANDOM_FOREST with R2: 0.9994
+BEST MODEL PERFORMANCE: RANDOM_FOREST with TEST R2: 0.9994
 
 TARGET ACHIEVED: R² score of 90% or better has been reached!

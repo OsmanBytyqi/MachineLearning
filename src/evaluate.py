@@ -84,20 +84,34 @@ class ModelEvaluator:
         
         return importance_df
     
-    def save_results(self, results: Dict[str, Dict[str, float]]) -> None:
+    def save_results(self, results: Dict[str, Dict[str, float]], 
+                    train_results: Dict[str, Dict[str, float]] = None) -> None:
         """Save evaluation results to a file."""
         with open(self.metrics_file, 'w') as f:
             f.write("# MODEL PERFORMANCE SUMMARY\n\n")
             
             for model_name, metrics in results.items():
-                f.write(f"\n{model_name.upper()} Results:\n")
+                f.write(f"\n{model_name.upper()} Results (TEST):\n")
                 for metric_name, value in metrics.items():
                     if metric_name != 'predictions':
                         f.write(f"{metric_name.upper()}: {value:.4f}\n")
+                
+                # Include training results if available
+                if train_results and model_name in train_results:
+                    f.write(f"\n{model_name.upper()} Results (TRAIN):\n")
+                    for metric_name, value in train_results[model_name].items():
+                        if metric_name != 'predictions':
+                            f.write(f"{metric_name.upper()}: {value:.4f}\n")
+                    
+                    # Calculate and show gap
+                    if 'r2' in metrics and 'r2' in train_results[model_name]:
+                        r2_gap = train_results[model_name]['r2'] - metrics['r2']
+                        f.write(f"R2_GAP (TRAIN-TEST): {r2_gap:.4f}\n")
+                
                 f.write("-" * 80 + "\n")
             
             best_model_name, best_metrics = self.get_best_model(results)
-            f.write(f"\n\nBEST MODEL PERFORMANCE: {best_model_name.upper()} with R2: {best_metrics.get('r2', 0):.4f}\n")
+            f.write(f"\n\nBEST MODEL PERFORMANCE: {best_model_name.upper()} with TEST R2: {best_metrics.get('r2', 0):.4f}\n")
             
             best_r2 = best_metrics.get('r2', 0)
             if best_r2 >= 0.9:

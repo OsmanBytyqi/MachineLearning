@@ -87,9 +87,25 @@ class MLPipeline:
             xgb_model = self.train_evaluate_save_model(trainer, 'xgboost', X_train, y_train, X_test, y_test, results)
             cat_model = self.train_evaluate_save_model(trainer, 'catboost', X_train, y_train, X_test, y_test, results)
             
+            # Create models dictionary for evaluation
+            models = {
+                "random_forest": rf_model,
+                "xgboost": xgb_model,
+                "catboost": cat_model
+            }
+            
             # Evaluation
             evaluator = ModelEvaluator()
-            evaluator.save_results(results)
+            
+            # Collect train metrics first
+            train_results = {}
+            for model_name, model in models.items():
+                train_metrics = evaluator.evaluate_model(model, X_train, y_train, f"{model_name} (Train Internal)")
+                train_results[model_name] = train_metrics
+                
+            # Save results with both test and train metrics
+            evaluator.save_results(results, train_results)
+            
             best_model_name, best_metrics = evaluator.get_best_model(results)
             best_r2 = best_metrics.get('r2', 0)
             
@@ -140,6 +156,22 @@ class MLPipeline:
             logging.info("\nTraining completed successfully!")
             logging.info("Detailed metrics saved to results/summary.txt")
             logging.info("Visualizations have been saved to results/plots/")
+
+            # Evaluate on test data (you're already doing this)
+            print("\nTEST DATA EVALUATION:")
+            test_metrics = {}  # Store test metrics for comparison
+            for model_name, model in models.items():
+                metrics = evaluator.evaluate_model(model, X_test, y_test, f"{model_name} (Test)")
+                test_metrics[model_name] = metrics
+
+            # Add evaluation on training data
+            print("\nTRAINING DATA EVALUATION:")
+            for model_name, model in models.items():
+                train_metrics = evaluator.evaluate_model(model, X_train, y_train, f"{model_name} (Train)")
+                
+                # Calculate gap between train and test
+                r2_gap = train_metrics['r2'] - test_metrics[model_name]['r2']
+                print(f"{model_name} - R² Gap (Train-Test): {r2_gap:.4f}")
 
         except Exception as e:
             logging.error(f"Error in main: {str(e)}")

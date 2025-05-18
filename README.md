@@ -537,18 +537,23 @@ We evaluated our regression models using multiple metrics to ensure comprehensiv
 
 ### Performance Metrics Comparison
 
-The following table summarizes the key performance metrics for each model:
+The following table summarizes the key performance metrics for each model on training and test sets:
 
-| Model           | MAE     | RMSE    | R²      |
-|-----------------|---------|---------|---------|
-| Random Forest   | 0.0067  | 0.0290  | 0.9994  |
-| XGBoost         | 0.0439  | 0.0719  | 0.9961  |
-| CatBoost        | 0.0239  | 0.0415  | 0.9987  |
+| Model           | Dataset |   MAE   |  RMSE   |   R²    |
+|-----------------|---------|---------|---------|---------|
+| Random Forest   | Train   | 0.0031  | 0.0185  | 0.9998  |
+| Random Forest   | Test    | 0.0067  | 0.0290  | 0.9994  |
+| XGBoost         | Train   | 0.0425  | 0.0686  | 0.9966  |
+| XGBoost         | Test    | 0.0439  | 0.0719  | 0.9961  |
+| CatBoost        | Train   | 0.0210  | 0.0337  | 0.9992  |
+| CatBoost        | Test    | 0.0239  | 0.0415  | 0.9987  |
 
 **Key findings:**
-- **Random Forest** achieved the best overall performance with an exceptional R² score of 0.9993, indicating it explains 99.93% of the variance in fine amounts
-- **XGBoost** showed strong performance with an R² of 0.9961, though with slightly higher error metrics
-- **CatBoost** demonstrated excellent performance with an R² of 0.9987, positioning it between the other two models in effectiveness
+- **Random Forest** achieved the best overall performance with an exceptional R² score of 0.9994 on test data, explaining 99.94% of the variance in fine amounts
+- **XGBoost** showed strong performance with an R² of 0.9961 on test data
+- **CatBoost** demonstrated excellent performance with an R² of 0.9987 on test data
+- All models show minimal gaps between training and test performance (0.04%-0.05%), confirming they are not overfitting
+- Error metrics (MAE, RMSE) are consistently low across all models, indicating high prediction accuracy
 
 The target goal of achieving an R² score of 90% or better was significantly exceeded by all models.
 
@@ -720,3 +725,30 @@ This project demonstrates that machine learning can achieve remarkable accuracy 
 
 ## Authors and Acknowledgments
 Project developed for academic and practical purposes by Urim Hoxha and Osman Bytyqi as part of the Machine Learning course at the University of Prishtina.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/OsmanBytyqi/MachineLearning?tab=MIT-1-ov-file) for details.
+
+```
+MIT License
+
+Copyright (c) 2025 Osman Bytyqi, Urim Hoxha
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
